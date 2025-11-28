@@ -14,22 +14,24 @@ Boid CreateBoid(Vector2 position, int rotation)
 
 void CheckEdges(Boid* boid)
 {
-	if (boid->position.x < -SIZE)
+	Vector2 screenDim = Vector2{ (float)GetScreenWidth(), (float)GetScreenHeight() };
+
+	if (boid->position.x < -size)
 	{
-		boid->position.x = SCREEN_WIDTH + SIZE;
+		boid->position.x = screenDim.x + size;
 	}
-	else if (boid->position.x > SCREEN_WIDTH + SIZE)
+	else if (boid->position.x > screenDim.x + size)
 	{
-		boid->position.x = -SIZE;
+		boid->position.x = -size;
 	}
 
-	if (boid->position.y < -SIZE)
+	if (boid->position.y < -size)
 	{
-		boid->position.y = SCREEN_HEIGHT + SIZE;
+		boid->position.y = screenDim.y + size;
 	}
-	else if (boid->position.y > SCREEN_HEIGHT + SIZE)
+	else if (boid->position.y > screenDim.y + size)
 	{
-		boid->position.y = -SIZE;
+		boid->position.y = -size;
 	}
 }
 
@@ -39,7 +41,7 @@ Vector2 Alignment(Boid* boid, Boid boids[])
 	Vector2 steering = Vector2Zero();
 	int total{ 0 };
 
-	for (int i = 0; i < MAX_BOIDS; i++)
+	for (int i = 0; i < maxBoids; i++)
 	{
 		if (Vector2Distance(boid->position, boids[i].position) < radius && !(boid == &boids[i]))
 		{
@@ -51,9 +53,9 @@ Vector2 Alignment(Boid* boid, Boid boids[])
 	if (total > 0)
 	{
 		steering = Vector2Scale(steering, 1.0f / total);
-		steering = Vector2Scale(Vector2Normalize(steering), MAX_SPEED);
+		steering = Vector2Scale(Vector2Normalize(steering), maxSpeed);
 		steering = Vector2Subtract(steering, boid->velocity);
-		steering = Vector2ClampValue(steering, 0, MAX_FORCE);
+		steering = Vector2ClampValue(steering, 0, maxForce);
 	}
 
 	return steering;
@@ -65,7 +67,7 @@ Vector2 Separation(Boid* boid, Boid boids[])
 	Vector2 steering = Vector2Zero();
 	int total{ 0 };
 
-	for (int i = 0; i < MAX_BOIDS; i++)
+	for (int i = 0; i < maxBoids; i++)
 	{
 		float dist = Vector2Distance(boid->position, boids[i].position);
 		if (dist < radius && !(boid == &boids[i]))
@@ -80,9 +82,9 @@ Vector2 Separation(Boid* boid, Boid boids[])
 	if (total > 0)
 	{
 		steering = Vector2Scale(steering, 1.0f / total);
-		steering = Vector2Scale(Vector2Normalize(steering), MAX_SPEED);
+		steering = Vector2Scale(Vector2Normalize(steering), maxSpeed);
 		steering = Vector2Subtract(steering, boid->velocity);
-		steering = Vector2ClampValue(steering, 0, MAX_FORCE);
+		steering = Vector2ClampValue(steering, 0, maxForce);
 	}
 
 	return steering;
@@ -94,7 +96,7 @@ Vector2 Cohesion(Boid* boid, Boid boids[])
 	Vector2 steering = Vector2Zero();
 	int total{ 0 };
 
-	for (int i = 0; i < MAX_BOIDS; i++)
+	for (int i = 0; i < maxBoids; i++)
 	{
 		if (Vector2Distance(boid->position, boids[i].position) <= radius && !(boid == &boids[i]))
 		{
@@ -107,9 +109,9 @@ Vector2 Cohesion(Boid* boid, Boid boids[])
 	{
 		steering = Vector2Scale(steering, 1.0f / total);
 		steering = Vector2Subtract(steering, boid->position);
-		steering = Vector2Scale(Vector2Normalize(steering), MAX_SPEED);
+		steering = Vector2Scale(Vector2Normalize(steering), maxSpeed);
 		steering = Vector2Subtract(steering, boid->velocity);
-		steering = Vector2ClampValue(steering, 0, MAX_FORCE);
+		steering = Vector2ClampValue(steering, 0, maxForce);
 	}
 
 	return steering;
@@ -117,13 +119,9 @@ Vector2 Cohesion(Boid* boid, Boid boids[])
 
 void Flock(Boid* boid, Boid boids[])
 {
-	Vector2 alignment = Alignment(boid, boids);
-	Vector2 separation = Separation(boid, boids);
-	Vector2 cohesion = Cohesion(boid, boids);
-
-	boid->acceleration = Vector2Add(boid->acceleration, alignment);
-	boid->acceleration = Vector2Add(boid->acceleration, separation);
-	boid->acceleration = Vector2Add(boid->acceleration, cohesion);
+	boid->acceleration = Vector2Add(boid->acceleration, Alignment(boid, boids));
+	boid->acceleration = Vector2Add(boid->acceleration, Separation(boid, boids));
+	boid->acceleration = Vector2Add(boid->acceleration, Cohesion(boid, boids));
 }
 
 void Update(Boid* boid, Boid boids[])
@@ -133,7 +131,7 @@ void Update(Boid* boid, Boid boids[])
 	Flock(boid, boids);
 
 	boid->velocity = Vector2Add(boid->velocity, boid->acceleration);
-	boid->velocity = Vector2ClampValue(boid->velocity, 0, MAX_SPEED);
+	boid->velocity = Vector2ClampValue(boid->velocity, 0, maxSpeed);
 	boid->position = Vector2Add(boid->position, boid->velocity);
 	boid->acceleration = Vector2Zero();
 
@@ -142,5 +140,5 @@ void Update(Boid* boid, Boid boids[])
 
 void Render(Boid boid)
 {
-	DrawPolyLines(boid.position, 3, SIZE, boid.rotation, BLACK);
+	DrawPolyLines(boid.position, 3, size, boid.rotation, BLACK);
 }
